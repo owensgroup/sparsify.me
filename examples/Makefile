@@ -1,5 +1,3 @@
-example := sparsify
-
 CXX := g++
 NVCC = "$(shell which nvcc)"
 NVCC_VERSION = $(strip $(shell nvcc --version | grep release | sed 's/.*release //' |  sed 's/,.*//'))
@@ -27,23 +25,21 @@ NVCCOPT     = -O3 --generate-line-info
 CXXOPT      = -O3
 
 # Debug Flags
-NVCCDEBUG   = --debug --device-debug
-CXXDEBUG    = -g
+NVCCDEBUG   = -O0 --debug --device-debug
+CXXDEBUG    = -O0 -g
 
 ## Includes & Sources
 CUDA	= "$(shell dirname $(NVCC))/../include"
-INC 	= -I./../include -I$(CUDA)
-SRC 	= $(shell find . -name "*.cu")
+CUBLAS = -lcublas
+INC 	= -I./../include -I$(CUDA) $(CUBLAS)
 
-all: bin/$(example)
+SOURCES = $(shell find . -name "*.cu")
+EXE   	= $(patsubst %.cu,%,$(SOURCES))
 
-bin/$(example): $(SRC)
+all: $(EXE)
+% : %.cu
 	mkdir -p bin
-	$(NVCC) -ccbin=$(CXX) $(NVCCFLAGS) ${NVCCOPT} --compiler-options "${CXXFLAGS} ${CXXOPT}" -o bin/$(example) $(SRC) $(INC)
-
-debug : $(SRC)
-	mkdir -p bin
-	$(NVCC) -ccbin=$(CXX) $(NVCCFLAGS) ${NVCCDEBUG} --compiler-options "${CXXFLAGS} ${CXXDEBUG}" -o bin/$(example) $(SRC) $(INC)
+	$(NVCC) -ccbin=$(CXX) $(NVCCFLAGS) ${NVCCOPT} --compiler-options "${CXXFLAGS} ${CXXOPT}" -o bin/$@ $< $(INC)
 
 clean:
 	rm -rf bin

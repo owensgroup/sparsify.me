@@ -8,8 +8,7 @@
  * @copyright Copyright (c) 2021
  *
  */
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
 
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
