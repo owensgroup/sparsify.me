@@ -31,7 +31,8 @@ CXXDEBUG    = -O0 -g
 ## Includes & Sources
 CUDA	= "$(shell dirname $(NVCC))/../include"
 CUBLAS = -lcublas
-INC 	= -I./../include -I$(CUDA) $(CUBLAS)
+CUSPARSE = -lcusparse
+INC 	= -I./../include -I$(CUDA) $(CUBLAS) $(CUSPARSE)
 
 SOURCES = $(shell find . -name "*.cu")
 EXE   	= $(patsubst %.cu,%,$(SOURCES))
