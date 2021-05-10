@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
   std::size_t m = 4;
   std::size_t n = 3;
   std::size_t k = 4;
-  std::size_t batch_size = 1;
+  std::size_t batch_size = 2;
 
   /// Sparse Matrices A (batched)
   thrust::host_vector<ell_t<type_t, util::memory_space_t::host>> h_As(
@@ -87,4 +87,30 @@ int main(int argc, char** argv) {
   std::cout << "Matrix Sizes (m, n, k, batch) = (" << m << ", " << n << ", "
             << k << ", " << batch_size << ")" << std::endl;
   std::cout << "Time elapsed (ms) = " << time << std::endl;
+
+  std::cout << "A-Matrix = " << std::endl;
+  for (std::size_t batch = 0; batch < batch_size; ++batch) {
+    std::cout << "A-Matrix (Column Idx) = " << std::endl;
+    thrust::copy(h_As[batch].column_indices.begin(), h_As[batch].column_indices.end(),
+                 std::ostream_iterator<std::size_t>(std::cout, " "));
+    std::cout << std::endl;
+    std::cout << "A-Matrix (Values) = " << std::endl;
+    thrust::copy(h_As[batch].values.begin(), h_As[batch].values.end(),
+                 std::ostream_iterator<type_t>(std::cout, " "));
+    std::cout << std::endl;
+  }
+
+  std::cout << "B-Matrix = " << std::endl;
+  for (std::size_t batch = 0; batch < batch_size; ++batch) {
+    thrust::copy(h_B.begin(), h_B.end(),
+                 std::ostream_iterator<type_t>(std::cout, " "));
+    std::cout << std::endl;
+  }
+
+  std::cout << "C-Matrix = " << std::endl;
+  for (std::size_t batch = 0; batch < batch_size; ++batch) {
+    thrust::copy(d_C_batches[batch].begin(), d_C_batches[batch].end(),
+                 std::ostream_iterator<type_t>(std::cout, " "));
+    std::cout << std::endl;
+  }
 }

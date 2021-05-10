@@ -10,7 +10,7 @@ GEN_SM61 	= -gencode=arch=compute_61,code=\"sm_61,compute_61\" # Pascal GTX10XX
 GEN_SM60 	= -gencode=arch=compute_60,code=\"sm_60,compute_60\" # Pascal P100
 
 # Add your own SM target (default: GTX10XX):
-SM_TARGETS 	= $(GEN_SM61)
+SM_TARGETS 	= $(GEN_SM70)
 
 CXXFLAGS    += -std=c++14
 CXXFLAGS    += -Wall
