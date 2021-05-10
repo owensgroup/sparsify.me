@@ -7,6 +7,11 @@
 namespace sparsifyme {
 namespace util {
 
+struct launch_t {
+  cudaStream_t stream;
+  cudaEvent_t event;
+};
+
 enum memory_space_t { device, host };
 
 template <typename type_t, memory_space_t space>

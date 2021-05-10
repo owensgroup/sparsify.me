@@ -59,8 +59,26 @@ float spmm(ell_t<float, util::memory_space_t::device>* As,
            std::size_t batch_size,
            float alpha,
            float beta) {
-  cusparseHandle_t context;
-  cusparseCreate(&context);
+  cusparseHandle_t master_handle;
+  cusparseCreate(&master_handle);
+  thrust::host_vector<cusparseHandle_t> handles;
+
+  cudaStream_t master_stream;
+  cudaStreamCreateWithFlags(&master_stream, cudaStreamNonBlocking);
+  cusparseSetStream(master_handle, master_stream);
+
+  thrust::host_vector<util::launch_t> settings;
+  for (std::size_t batch = 0; batch < batch_size; ++batch) {
+    util::launch_t s;
+    cudaStreamCreateWithFlags(&s.stream, cudaStreamNonBlocking);
+    cudaEventCreateWithFlags(&s.event, cudaEventDisableTiming);
+    settings.push_back(s);
+
+    cusparseHandle_t handle;
+    cusparseCreate(&handle);
+    cusparseSetStream(handle, settings[batch].stream);
+    handles.push_back(handle);
+  }
 
   thrust::host_vector<cusparseSpMatDescr_t> desc_As(
       batch_size);              // vector of A matrices descriptors
@@ -92,7 +110,7 @@ float spmm(ell_t<float, util::memory_space_t::device>* As,
 
     std::size_t buffer_size;
     CHECK_CUSPARSE(cusparseSpMM_bufferSize(
-        context, CUSPARSE_OPERATION_NON_TRANSPOSE,
+        master_handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
         CUSPARSE_OPERATION_NON_TRANSPOSE, &alpha, desc_A, desc_B, &beta, desc_C,
         CUDA_R_32F, CUSPARSE_SPMM_ALG_DEFAULT, &buffer_size));
 
@@ -100,17 +118,33 @@ float spmm(ell_t<float, util::memory_space_t::device>* As,
     buffer.resize(buffer_size);
   }
 
+  cudaDeviceSynchronize();
+
+  std::vector<std::thread> threads;
   util::timer_t timer;
-  auto& desc_A = desc_As[0];
-  auto& desc_C = desc_Cs[0];
-  auto& buffer = buffers[0];
+  for (std::size_t batch = 0; batch < batch_size; ++batch) {
+    threads.push_back(std::thread([&, batch]() {
+      auto handle = handles[batch];
+      auto& desc_A = desc_As[batch];
+      auto& desc_C = desc_Cs[batch];
+      auto& buffer = buffers[batch];
 
-  timer.begin();
-  CHECK_CUSPARSE(cusparseSpMM(
-      context, CUSPARSE_OPERATION_TRANSPOSE, CUSPARSE_OPERATION_TRANSPOSE,
-      &alpha, desc_A, desc_B, &beta, desc_C, CUDA_R_32F,
-      CUSPARSE_SPMM_ALG_DEFAULT, (void*)buffer.data().get()));
+      timer.begin();
+      cusparseSpMM(handle, CUSPARSE_OPERATION_TRANSPOSE,
+                   CUSPARSE_OPERATION_TRANSPOSE, &alpha, desc_A, desc_B, &beta,
+                   desc_C, CUDA_R_32F, CUSPARSE_SPMM_ALG_DEFAULT,
+                   (void*)buffer.data().get());
+      cudaEventRecord(settings[batch].event, settings[batch].stream);
+    }));
+  }
 
+  for (auto& thread : threads)
+    thread.join();
+
+  for (std::size_t batch = 0; batch < batch_size; ++batch)
+    cudaStreamWaitEvent(master_stream, settings[batch].event, 0);
+
+  cudaStreamSynchronize(master_stream);
   return timer.end();
 }
 }  // namespace batched
