@@ -130,9 +130,9 @@ float spmm(ell_t<float, util::memory_space_t::device>* As,
       auto& buffer = buffers[batch];
 
       timer.begin();
-      cusparseSpMM(handle, CUSPARSE_OPERATION_TRANSPOSE,
-                   CUSPARSE_OPERATION_TRANSPOSE, &alpha, desc_A, desc_B, &beta,
-                   desc_C, CUDA_R_32F, CUSPARSE_SPMM_ALG_DEFAULT,
+      cusparseSpMM(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
+                   CUSPARSE_OPERATION_NON_TRANSPOSE, &alpha, desc_A, desc_B,
+                   &beta, desc_C, CUDA_R_32F, CUSPARSE_SPMM_ALG_DEFAULT,
                    (void*)buffer.data().get());
       cudaEventRecord(settings[batch].event, settings[batch].stream);
     }));
