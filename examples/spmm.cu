@@ -47,6 +47,9 @@ int main(int argc, char** argv) {
 
     for (auto& a_value : h_A.values)
       a_value = util::get_random();
+
+    for (std::size_t col = 0; col < h_A.column_indices.size(); col++)
+      h_A.column_indices[col] = col;
   }
 
   /// Dense Matrix B
@@ -84,25 +87,4 @@ int main(int argc, char** argv) {
   std::cout << "Matrix Sizes (m, n, k, batch) = (" << m << ", " << n << ", "
             << k << ", " << batch_size << ")" << std::endl;
   std::cout << "Time elapsed (ms) = " << time << std::endl;
-
-  // std::cout << "A-Matrix = " << std::endl;
-  // for (std::size_t batch = 0; batch < batch_size; ++batch) {
-  //   thrust::copy(d_A_batches[batch].begin(), d_A_batches[batch].end(),
-  //                std::ostream_iterator<type_t>(std::cout, " "));
-  //   std::cout << std::endl;
-  // }
-
-  // std::cout << "B-Matrix = " << std::endl;
-  // for (std::size_t batch = 0; batch < batch_size; ++batch) {
-  //   thrust::copy(d_B_batches[batch].begin(), d_B_batches[batch].end(),
-  //                std::ostream_iterator<type_t>(std::cout, " "));
-  //   std::cout << std::endl;
-  // }
-
-  // std::cout << "C-Matrix = " << std::endl;
-  // for (std::size_t batch = 0; batch < batch_size; ++batch) {
-  //   thrust::copy(d_C_batches[batch].begin(), d_C_batches[batch].end(),
-  //                std::ostream_iterator<type_t>(std::cout, " "));
-  //   std::cout << std::endl;
-  // }
 }

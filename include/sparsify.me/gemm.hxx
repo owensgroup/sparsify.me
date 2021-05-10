@@ -14,6 +14,8 @@
 
 #include <cublas_v2.h>
 
+#include <sparsify.me/util.hxx>
+
 #pragma once
 namespace sparsifyme {
 namespace batched {
@@ -28,6 +30,8 @@ float gemm(type_t** A_ptrs,
            std::size_t n,
            std::size_t k,
            std::size_t batch_size,
+           cublasOperation_t transpose_a = CUBLAS_OP_N,
+           cublasOperation_t transpose_b = CUBLAS_OP_N,
            type_t alpha = (type_t)1.0f,
            type_t beta = (type_t)0.0f);
 
@@ -39,16 +43,15 @@ float gemm(__half** A_ptrs,
            std::size_t n,
            std::size_t k,
            std::size_t batch_size,
+           cublasOperation_t transpose_a,
+           cublasOperation_t transpose_b,
            __half alpha,
            __half beta) {
   cublasHandle_t context;
   cublasCreate(&context);
 
-  float timer;
-  cudaEvent_t start, stop;
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
-  cudaEventRecord(start, 0);
+  util::timer_t timer;
+  timer.begin();
   /**
    * @brief Call cublas' batched GEMM.
    *
@@ -74,19 +77,15 @@ float gemm(__half** A_ptrs,
    */
   try {
     cublasStatus_t status =
-        cublasHgemmBatched(context, CUBLAS_OP_N, CUBLAS_OP_N, m, n, k, &alpha,
+        cublasHgemmBatched(context, transpose_a, transpose_b, m, n, k, &alpha,
                            A_ptrs, m, B_ptrs, k, &beta, C_ptrs, m, batch_size);
     if (status != CUBLAS_STATUS_SUCCESS)
       throw(status);
   } catch (cublasStatus_t s) {
-    std::cout << "error: cublasSgemmBatched exited with an error: " << s
+    std::cout << "error: cublasHgemmBatched exited with an error: " << s
               << std::endl;
   }
-
-  cudaEventRecord(stop, 0);
-  cudaEventSynchronize(stop);
-  cudaEventElapsedTime(&timer, start, stop);
-  return timer;
+  return timer.end();
 }
 
 template <>
@@ -97,16 +96,15 @@ float gemm(float** A_ptrs,
            std::size_t n,
            std::size_t k,
            std::size_t batch_size,
+           cublasOperation_t transpose_a,
+           cublasOperation_t transpose_b,
            float alpha,
            float beta) {
   cublasHandle_t context;
   cublasCreate(&context);
 
-  float timer;
-  cudaEvent_t start, stop;
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
-  cudaEventRecord(start, 0);
+  util::timer_t timer;
+  timer.begin();
   /**
    * @brief Call cublas' batched GEMM.
    *
@@ -132,7 +130,7 @@ float gemm(float** A_ptrs,
    */
   try {
     cublasStatus_t status =
-        cublasSgemmBatched(context, CUBLAS_OP_N, CUBLAS_OP_N, m, n, k, &alpha,
+        cublasSgemmBatched(context, transpose_a, transpose_b, m, n, k, &alpha,
                            A_ptrs, m, B_ptrs, k, &beta, C_ptrs, m, batch_size);
     if (status != CUBLAS_STATUS_SUCCESS)
       throw(status);
@@ -140,11 +138,7 @@ float gemm(float** A_ptrs,
     std::cout << "error: cublasSgemmBatched exited with an error: " << s
               << std::endl;
   }
-
-  cudaEventRecord(stop, 0);
-  cudaEventSynchronize(stop);
-  cudaEventElapsedTime(&timer, start, stop);
-  return timer;
+  return timer.end();
 }
 
 template <>
@@ -155,16 +149,15 @@ float gemm(double** A_ptrs,
            std::size_t n,
            std::size_t k,
            std::size_t batch_size,
+           cublasOperation_t transpose_a,
+           cublasOperation_t transpose_b,
            double alpha,
            double beta) {
   cublasHandle_t context;
   cublasCreate(&context);
 
-  float timer;
-  cudaEvent_t start, stop;
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
-  cudaEventRecord(start, 0);
+  util::timer_t timer;
+  timer.begin();
   /**
    * @brief Call cublas' batched GEMM.
    *
@@ -190,19 +183,15 @@ float gemm(double** A_ptrs,
    */
   try {
     cublasStatus_t status =
-        cublasDgemmBatched(context, CUBLAS_OP_N, CUBLAS_OP_N, m, n, k, &alpha,
+        cublasDgemmBatched(context, transpose_a, transpose_b, m, n, k, &alpha,
                            A_ptrs, m, B_ptrs, k, &beta, C_ptrs, m, batch_size);
     if (status != CUBLAS_STATUS_SUCCESS)
       throw(status);
   } catch (cublasStatus_t s) {
-    std::cout << "error: cublasSgemmBatched exited with an error: " << s
+    std::cout << "error: cublasDgemmBatched exited with an error: " << s
               << std::endl;
   }
-
-  cudaEventRecord(stop, 0);
-  cudaEventSynchronize(stop);
-  cudaEventElapsedTime(&timer, start, stop);
-  return timer;
+  return timer.end();
 }
 
 }  // namespace batched
