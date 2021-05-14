@@ -66,7 +66,7 @@ float spmm(ell_t<type_t, util::memory_space_t::device>* As,
 
   thrust::host_vector<thrust::device_vector<char>> buffers(batch_size);
 
-  // Matrix descriptor for A.
+  // Matrix descriptor for B.
   cusparseCreateDnMat(&desc_B, k, n, k, B, CUDA_R_16F, CUSPARSE_ORDER_COL);
 
   for (std::size_t batch = 0; batch < batch_size; ++batch) {
@@ -75,6 +75,7 @@ float spmm(ell_t<type_t, util::memory_space_t::device>* As,
 
     // This API is absolutely atrocious.
     // Build Blocked-ELL descr based on ell_t.
+    // Matrix descriptor for A.
     cusparseCreateBlockedEll(&desc_A, A.rows, A.cols, A.block_size,
                              A.column_indices.size(),  // ELL Columns
                              A.column_indices.data().get(),
