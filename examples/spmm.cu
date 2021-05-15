@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
     auto& h_A = h_As[batch];
     h_A.rows = m;
     h_A.cols = k;
-    h_A.block_size = 2;  // 2 by 2 blocks.
+    h_A.block_size = 2;           // 2 by 2 blocks.
     h_A.ell_cols = h_A.cols / 2;  // we divide by 2 assuming 50% sparsity.
 
     // Calculate sizes of values and indices arrays.
@@ -55,8 +55,8 @@ int main(int argc, char** argv) {
     h_A.values.resize(values_size);
 
     // do not care how values are initialized.
-    for(std::size_t i = 1; i <= h_A.values.size(); ++i)
-      h_A.values[i-1] = static_cast<float>(i);
+    for (std::size_t i = 1; i <= h_A.values.size(); ++i)
+      h_A.values[i - 1] = static_cast<float>(i);
 
     // column indices initialize to random columns.
     for (std::size_t r = 0; r < h_A.blocked_rows; ++r) {
@@ -83,8 +83,8 @@ int main(int argc, char** argv) {
   thrust::host_vector<type_t> h_B(k * n);
 
   // Create A w/ random numbers.
-  for(std::size_t i = 1; i <= h_B.size(); ++i)
-    h_B[i-1] = static_cast<float>(i);
+  for (std::size_t i = 1; i <= h_B.size(); ++i)
+    h_B[i - 1] = static_cast<float>(i);
 
   // Move the data to GPU.
   // Device:: Sparse Matrices A
@@ -104,12 +104,12 @@ int main(int argc, char** argv) {
     d_A = h_A;
 
     auto& d_C = d_C_batches[batch];
-    d_C.resize(m * n);                         // m x n
+    d_C.resize(m * n);                   // m x n
     C_ptrs.push_back(d_C.data().get());  // Store pointers
   }
 
-  float elapsed = batched::spmm(d_As.data(), d_B.data().get(),
-                                C_ptrs.data(), m, n, k, batch_size);
+  float elapsed = batched::spmm(d_As.data(), d_B.data().get(), C_ptrs.data(), m,
+                                n, k, batch_size);
 
   // Log and output.
   std::cout << "Matrix Sizes (m, n, k, batch) = (" << m << ", " << n << ", "
@@ -122,18 +122,18 @@ int main(int argc, char** argv) {
 
   std::cout << "B-Matrix" << std::endl;
   for (std::size_t batch = 0; batch < batch_size; ++batch) {
-    std::cout  << "\t";
-    for(auto&val : h_B)
+    std::cout << "\t";
+    for (auto& val : h_B)
       std::cout << static_cast<float>(val) << " ";
     std::cout << std::endl;
   }
 
   std::cout << "C-Matrix" << std::endl;
   for (std::size_t batch = 0; batch < batch_size; ++batch) {
-    std::cout  << "\t";
+    std::cout << "\t";
     auto& d_C = d_C_batches[batch];
     thrust::host_vector<type_t> h_C = d_C;
-    for(auto&val : h_C)
+    for (auto& val : h_C)
       std::cout << static_cast<float>(val) << " ";
     std::cout << std::endl;
   }

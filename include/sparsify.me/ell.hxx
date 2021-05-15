@@ -50,7 +50,7 @@ struct ell_t {
     std::cout << std::endl;
     std::cout << "\tValues = ";
     thrust::host_vector<type_t> temp = values;
-    for(auto&val : temp)
+    for (auto& val : temp)
       std::cout << static_cast<float>(val) << " ";
     std::cout << std::endl;
   }
