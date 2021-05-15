@@ -14,6 +14,7 @@
 #include <thread>
 
 #include <cusparse.h>
+#include <nvToolsExt.h>
 
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
@@ -63,12 +64,16 @@ float spmm(ell_t<type_t, util::memory_space_t::device>* As,
   // Create dense matrix B
   cusparseCreateDnMat(&desc_B, k, n, k, B, CUDA_R_16F, CUSPARSE_ORDER_COL);
 
+  nvtxRangePushA("spmm_block");
   std::vector<std::thread> threads;
   for (std::size_t batch = 0; batch < batch_size; ++batch) {
     threads.push_back(std::thread([&, batch]() {
       util::timer_t timer;
+      cudaStream_t stream;
+      cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking);
       cusparseHandle_t handle;
       cusparseCreate(&handle);
+      cusparseSetStream(handle, stream);
 
       auto& desc_A = desc_As[batch];
       auto& desc_C = desc_Cs[batch];
@@ -81,7 +86,8 @@ float spmm(ell_t<type_t, util::memory_space_t::device>* As,
                               CUSPARSE_OPERATION_NON_TRANSPOSE, &alpha, desc_A,
                               desc_B, &beta, desc_C, CUDA_R_32F,
                               CUSPARSE_SPMM_ALG_DEFAULT, &buffer_size);
-      cudaMalloc(&buffer, buffer_size);
+      cudaMallocAsync(&buffer, buffer_size, stream);
+      cudaStreamSynchronize(stream);
 
       timer.start();
       // execute SpMM
@@ -89,15 +95,17 @@ float spmm(ell_t<type_t, util::memory_space_t::device>* As,
                    CUSPARSE_OPERATION_NON_TRANSPOSE, &alpha, desc_A, desc_B,
                    &beta, desc_C, CUDA_R_32F, CUSPARSE_SPMM_ALG_DEFAULT,
                    buffer);
+      cudaStreamSynchronize(stream);
       timers[batch] = timer.end();
 
       // Clean-up
       cusparseDestroy(handle);
       cusparseDestroySpMat(desc_A);
       cusparseDestroyDnMat(desc_C);
-      cudaFree(buffer);
+      cudaFreeAsync(buffer, stream);
     }));
   }
+  nvtxRangePop();
 
   for (auto& thread : threads)
     thread.join();

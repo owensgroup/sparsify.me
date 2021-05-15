@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
   std::size_t m = 4;
   std::size_t n = 3;
   std::size_t k = 4;
-  std::size_t batch_size = 2;
+  std::size_t batch_size = 4;
 
   /// Sparse Matrices A (batched)
   thrust::host_vector<ell_t<type_t, util::memory_space_t::host>> h_As(
