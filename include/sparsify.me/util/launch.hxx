@@ -9,9 +9,9 @@
  *
  */
 #pragma once
-#include <thrust/host_vector.h>
-#include <sparsify.me/util.hxx>
 #include <cusparse.h>
+#include <thrust/host_vector.h>
+#include <sparsify.me/util/timer.hxx>
 
 namespace sparsifyme {
 namespace util {
@@ -37,7 +37,7 @@ void destroy_launch_configs(thrust::host_vector<launch_t>& configs) {
     cusparseDestroy(config.handle);
     cudaFreeAsync(config.buffer, config.stream);
     config.buffer = nullptr;
-    buffer_size = 0;
+    config.buffer_size = 0;
   }
 }
 }  // namespace util

@@ -20,8 +20,8 @@
 #include <thrust/host_vector.h>
 #include <thrust/reduce.h>
 
-#include <sparsify.me/ell.hxx>
-#include <sparsify.me/util.hxx>
+#include <sparsify.me/containers/ell.hxx>
+#include <sparsify.me/util/util.hxx>
 
 #pragma once
 
@@ -29,7 +29,7 @@ namespace sparsifyme {
 namespace batched {
 
 template <typename type_t>
-float spmm(ell_t<type_t, util::memory_space_t::device>* As,
+float spmm(ell_t<type_t, memory_space_t::device>* As,
            type_t* B,
            type_t** Cs,
            std::size_t m,

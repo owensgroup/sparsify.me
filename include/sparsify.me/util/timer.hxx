@@ -1,5 +1,5 @@
 /**
- * @file util.hxx
+ * @file timer.hxx
  * @author Muhammad Osama (mosama@ucdavis.edu)
  * @brief
  * @version 0.1
@@ -8,37 +8,9 @@
  * @copyright Copyright (c) 2021
  *
  */
-
-#include <random>
-
-#include <thrust/device_vector.h>
-#include <thrust/host_vector.h>
-
 #pragma once
 namespace sparsifyme {
 namespace util {
-
-enum memory_space_t { device, host };
-
-template <typename type_t, memory_space_t space>
-using vector_t =
-    std::conditional_t<space == memory_space_t::host,  // condition
-                       thrust::host_vector<type_t>,    // host_type
-                       thrust::device_vector<type_t>   // device_type
-                       >;
-
-template <typename type_t = float>
-type_t get_random(type_t begin = 0.0f, type_t end = 1.0f) {
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_real_distribution<> dis(begin, end);
-  return (type_t)dis(gen);
-}
-
-template <typename type_t>
-type_t ceil_div(type_t x, type_t y) {
-  return (x + y - 1) / y;
-}
 
 struct timer_t {
   float time;

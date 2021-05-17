@@ -12,8 +12,9 @@
 #include <ctime>
 #include <iostream>
 
+#include <sparsify.me/util/util.hxx>
+
 #include <sparsify.me/sparsify.hxx>
-#include <sparsify.me/util.hxx>
 
 int main(int argc, char** argv) {
   using weight_t = float;

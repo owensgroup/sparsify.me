@@ -16,9 +16,10 @@
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 
-#include <sparsify.me/ell.hxx>
+#include <sparsify.me/containers/ell.hxx>
+#include <sparsify.me/util/util.hxx>
+
 #include <sparsify.me/spmm.hxx>
-#include <sparsify.me/util.hxx>
 
 int main(int argc, char** argv) {
   using namespace sparsifyme;
@@ -31,8 +32,7 @@ int main(int argc, char** argv) {
   std::size_t batch_size = 4;
 
   /// Sparse Matrices A (batched)
-  thrust::host_vector<ell_t<type_t, util::memory_space_t::host>> h_As(
-      batch_size);
+  thrust::host_vector<ell_t<type_t, memory_space_t::host>> h_As(batch_size);
 
   for (std::size_t batch = 0; batch < batch_size; ++batch) {
     // Create a batch of A w/ random numbers.
@@ -88,8 +88,7 @@ int main(int argc, char** argv) {
 
   // Move the data to GPU.
   // Device:: Sparse Matrices A
-  thrust::host_vector<ell_t<type_t, util::memory_space_t::device>> d_As(
-      batch_size);
+  thrust::host_vector<ell_t<type_t, memory_space_t::device>> d_As(batch_size);
 
   // Device:: Matrix B
   thrust::device_vector<type_t> d_B = h_B;
