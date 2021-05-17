@@ -1,3 +1,14 @@
+/**
+ * @file util.hxx
+ * @author Muhammad Osama (mosama@ucdavis.edu)
+ * @brief
+ * @version 0.1
+ * @date 2021-05-17
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+
 #include <random>
 
 #include <thrust/device_vector.h>
@@ -6,11 +17,6 @@
 #pragma once
 namespace sparsifyme {
 namespace util {
-
-struct launch_t {
-  cudaStream_t stream;
-  cudaEvent_t event;
-};
 
 enum memory_space_t { device, host };
 

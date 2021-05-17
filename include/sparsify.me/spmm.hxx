@@ -41,6 +41,9 @@ float spmm(ell_t<type_t, util::memory_space_t::device>* As,
            float alpha = 1.0f,
            float beta = 0.0f) {
   thrust::host_vector<float> timers(batch_size);
+  thrust::host_vector<util::launch_t> configs(batch_size);
+  util::create_launch_configs(configs);
+
   thrust::host_vector<cusparseSpMatDescr_t> desc_As(batch_size);
   cusparseDnMatDescr_t desc_B;
   thrust::host_vector<cusparseDnMatDescr_t> desc_Cs(batch_size);
@@ -64,22 +67,16 @@ float spmm(ell_t<type_t, util::memory_space_t::device>* As,
   // Create dense matrix B
   cusparseCreateDnMat(&desc_B, k, n, k, B, CUDA_R_16F, CUSPARSE_ORDER_COL);
 
-  nvtxRangePushA("spmm_block");
   std::vector<std::thread> threads;
   for (std::size_t batch = 0; batch < batch_size; ++batch) {
     threads.push_back(std::thread([&, batch]() {
-      util::timer_t timer;
-      cudaStream_t stream;
-      cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking);
-      cusparseHandle_t handle;
-      cusparseCreate(&handle);
-      cusparseSetStream(handle, stream);
-
+      auto& handle = configs[batch].handle;
+      auto& stream = configs[batch].stream;
       auto& desc_A = desc_As[batch];
       auto& desc_C = desc_Cs[batch];
 
-      void* buffer;
-      std::size_t buffer_size = 0;
+      void* buffer = configs[batch].buffer;
+      auto& buffer_size = configs[batch].buffer_size;
 
       // allocate an external buffer if needed
       cusparseSpMM_bufferSize(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
@@ -88,7 +85,22 @@ float spmm(ell_t<type_t, util::memory_space_t::device>* As,
                               CUSPARSE_SPMM_ALG_DEFAULT, &buffer_size);
       cudaMallocAsync(&buffer, buffer_size, stream);
       cudaStreamSynchronize(stream);
+    }));
+  }
 
+  for (auto& thread : threads)
+    thread.join();
+
+  nvtxRangePushA("spmm_block");
+  for (std::size_t batch = 0; batch < batch_size; ++batch) {
+    threads.push_back(std::thread([&, batch]() {
+      auto& handle = configs[batch].handle;
+      auto& stream = configs[batch].stream;
+      auto& desc_A = desc_As[batch];
+      auto& desc_C = desc_Cs[batch];
+
+      void* buffer = configs[batch].buffer;
+      auto& timer = configs[batch].timer;
       timer.start();
       // execute SpMM
       cusparseSpMM(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
@@ -99,12 +111,10 @@ float spmm(ell_t<type_t, util::memory_space_t::device>* As,
       timers[batch] = timer.end();
 
       // Clean-up
-      cusparseDestroy(handle);
       cusparseDestroySpMat(desc_A);
       cusparseDestroyDnMat(desc_C);
-      cudaFreeAsync(buffer, stream);
     }));
-  }
+  }  // namespace batched
   nvtxRangePop();
 
   for (auto& thread : threads)
@@ -112,8 +122,9 @@ float spmm(ell_t<type_t, util::memory_space_t::device>* As,
 
   // More clean-up.
   cusparseDestroyDnMat(desc_B);
+  util::destroy_launch_configs(configs);
 
   return thrust::reduce(timers.begin(), timers.end(), (float)0.0f);
-}
+}  // namespace sparsifyme
 }  // namespace batched
 }  // namespace sparsifyme
