@@ -17,7 +17,7 @@
 #include <thrust/iterator/counting_iterator.h>
 #include <thrust/iterator/discard_iterator.h>
 
-#include <sparsify.me/util.hxx>
+#include <sparsify.me/util/util.hxx>
 
 #pragma once
 namespace sparsifyme {

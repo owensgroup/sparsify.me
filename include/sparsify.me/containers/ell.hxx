@@ -1,12 +1,23 @@
+/**
+ * @file ell.hxx
+ * @author Muhammad Osama (mosama@ucdavis.edu)
+ * @brief
+ * @version 0.1
+ * @date 2021-05-17
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+#pragma once
+#include <iostream>
+
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 
-#include <sparsify.me/util.hxx>
-
-#pragma once
+#include <sparsify.me/containers/memory.hxx>
+#include <sparsify.me/containers/vector.hxx>
 
 namespace sparsifyme {
-using namespace util;
 template <typename type_t = float,
           memory_space_t space = memory_space_t::device>
 struct ell_t {

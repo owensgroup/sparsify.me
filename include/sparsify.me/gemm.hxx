@@ -14,7 +14,7 @@
 
 #include <cublas_v2.h>
 
-#include <sparsify.me/util.hxx>
+#include <sparsify.me/util/util.hxx>
 
 #pragma once
 namespace sparsifyme {

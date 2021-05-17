@@ -14,8 +14,9 @@
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 
+#include <sparsify.me/util/util.hxx>
+
 #include <sparsify.me/gemm.hxx>
-#include <sparsify.me/util.hxx>
 
 int main(int argc, char** argv) {
   using type_t = float;
