@@ -7,29 +7,19 @@
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 
+/**
+ * @file timer.hxx
+ * @author Muhammad Osama (mosama@ucdavis.edu)
+ * @brief
+ * @version 0.1
+ * @date 2021-05-17
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
 #pragma once
 namespace sparsifyme {
 namespace util {
-
-struct launch_t {
-  cudaStream_t stream;
-  cudaEvent_t event;
-};
-
-enum memory_space_t { device, host };
-
-template <typename type_t, memory_space_t space>
-using vector_t =
-    std::conditional_t<space == memory_space_t::host,  // condition
-                       thrust::host_vector<type_t>,    // host_type
-                       thrust::device_vector<type_t>   // device_type
-                       >;
-
-float get_random() {
-  static std::default_random_engine e;
-  static std::uniform_real_distribution<> dis(0, 1);  // rage 0 - 1
-  return dis(e);
-}
 
 struct timer_t {
   float time;

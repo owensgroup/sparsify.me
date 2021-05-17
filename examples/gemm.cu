@@ -14,8 +14,9 @@
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 
+#include <sparsify.me/util/util.hxx>
+
 #include <sparsify.me/gemm.hxx>
-#include <sparsify.me/util.hxx>
 
 int main(int argc, char** argv) {
   using type_t = float;
@@ -85,14 +86,14 @@ int main(int argc, char** argv) {
     d_C_pointers.push_back(d_C.data().get());  // Store pointers
   }
 
-  float time = sparsifyme::batched::gemm(
+  float elapsed = sparsifyme::batched::gemm(
       d_A_pointers.data().get(), d_B_pointers.data().get(),
       d_C_pointers.data().get(), m, n, k, batch_size);
 
   // Log and output.
   std::cout << "Matrix Sizes (m, n, k, batch) = (" << m << ", " << n << ", "
             << k << ", " << batch_size << ")" << std::endl;
-  std::cout << "Time elapsed (ms) = " << time << std::endl;
+  std::cout << "Time elapsed (ms) = " << elapsed << std::endl;
 
   std::cout << "A-Matrix = " << std::endl;
   for (std::size_t batch = 0; batch < batch_size; ++batch) {

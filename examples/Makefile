@@ -18,7 +18,7 @@ CXXFLAGS    += -Wno-unused-local-typedefs -Wno-strict-aliasing -Wno-unused-funct
 
 NVCCFLAGS   += -std=c++14
 NVCCFLAGS   += $(SM_TARGETS)
-NVCCFLAGS   += --expt-extended-lambda --expt-relaxed-constexpr --use_fast_math --ptxas-options -v --relocatable-device-code true
+NVCCFLAGS   += --expt-extended-lambda --expt-relaxed-constexpr --use_fast_math --ptxas-options -v --relocatable-device-code true  -lnvToolsExt
 
 # Optimization Flags
 NVCCOPT     = -O3 --generate-line-info
