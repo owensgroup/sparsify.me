@@ -67,31 +67,28 @@ float spmm(ell_t<type_t, memory_space_t::device>* As,
   // Create dense matrix B
   cusparseCreateDnMat(&desc_B, k, n, k, B, CUDA_R_16F, CUSPARSE_ORDER_COL);
 
-  std::vector<std::thread> threads;
+  // Set-up temporary buffer for each batch of SpMM
   for (std::size_t batch = 0; batch < batch_size; ++batch) {
-    threads.push_back(std::thread([&, batch]() {
-      auto& handle = configs[batch].handle;
-      auto& stream = configs[batch].stream;
-      auto& desc_A = desc_As[batch];
-      auto& desc_C = desc_Cs[batch];
+    auto& handle = configs[batch].handle;
+    auto& stream = configs[batch].stream;
+    auto& desc_A = desc_As[batch];
+    auto& desc_C = desc_Cs[batch];
 
-      void* buffer = configs[batch].buffer;
-      auto& buffer_size = configs[batch].buffer_size;
+    void* buffer = configs[batch].buffer;
+    auto& buffer_size = configs[batch].buffer_size;
 
-      // allocate an external buffer if needed
-      cusparseSpMM_bufferSize(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
-                              CUSPARSE_OPERATION_NON_TRANSPOSE, &alpha, desc_A,
-                              desc_B, &beta, desc_C, CUDA_R_32F,
-                              CUSPARSE_SPMM_ALG_DEFAULT, &buffer_size);
-      cudaMallocAsync(&buffer, buffer_size, stream);
-      cudaStreamSynchronize(stream);
-    }));
+    // Allocate an external buffer if needed
+    cusparseSpMM_bufferSize(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
+                            CUSPARSE_OPERATION_NON_TRANSPOSE, &alpha, desc_A,
+                            desc_B, &beta, desc_C, CUDA_R_32F,
+                            CUSPARSE_SPMM_ALG_DEFAULT, &buffer_size);
+    cudaMallocAsync(&buffer, buffer_size, stream);
+    cudaStreamSynchronize(stream);
   }
 
-  for (auto& thread : threads)
-    thread.join();
-
-  nvtxRangePushA("spmm_block");
+  std::vector<std::thread> threads;
+  nvtxRangePushA("batched-SpMM");
+  // Execute batched-SpMM per each CPU thread
   for (std::size_t batch = 0; batch < batch_size; ++batch) {
     threads.push_back(std::thread([&, batch]() {
       auto& handle = configs[batch].handle;
@@ -102,7 +99,7 @@ float spmm(ell_t<type_t, memory_space_t::device>* As,
       void* buffer = configs[batch].buffer;
       auto& timer = configs[batch].timer;
       timer.start();
-      // execute SpMM
+      // Execute SpMM
       cusparseSpMM(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
                    CUSPARSE_OPERATION_NON_TRANSPOSE, &alpha, desc_A, desc_B,
                    &beta, desc_C, CUDA_R_32F, CUSPARSE_SPMM_ALG_DEFAULT,
@@ -114,7 +111,7 @@ float spmm(ell_t<type_t, memory_space_t::device>* As,
       cusparseDestroySpMat(desc_A);
       cusparseDestroyDnMat(desc_C);
     }));
-  }  // namespace batched
+  }
   nvtxRangePop();
 
   for (auto& thread : threads)
