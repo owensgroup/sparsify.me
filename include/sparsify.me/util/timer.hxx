@@ -53,35 +53,5 @@ struct timer_t {
  private:
   cudaEvent_t start_, stop_;
 };
-
-// m,n,k,b
-typedef std::tuple<int, int, int, int> mat_sz;
-
-std::vector<mat_sz> read_shapes(std::string filename) {
-  std::ifstream shape_file;
-  shape_file.open(filename);
-  std::vector<mat_sz> shape_data;
-  if(!shape_file.is_open()) {
-    throw "Unable to open shape CSV file.";
-  }
-  
-  std::string line;
-  std::getline(shape_file, line);
-  while(std::getline(shape_file, line)) {
-    std::istringstream s(line);
-    std::string field;
-    std::vector<int> line_data;
-    while(getline(s, field, ',')) {
-      line_data.push_back(std::stoi(field));
-    }
-    int m = line_data[0];
-    int n = line_data[1];
-    int k = line_data[2];
-    int b = line_data[3];
-
-    shape_data.push_back(std::make_tuple(m,n,k,b));
-  }
-  return shape_data;
-}
 }  // namespace util
 }  // namespace sparsifyme
