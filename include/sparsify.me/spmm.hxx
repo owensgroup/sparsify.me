@@ -87,6 +87,7 @@ float spmm(ell_t<type_t, memory_space_t::device>* As,
   }
 
   std::vector<std::thread> threads;
+  threads.reserve(batch_size);
   nvtxRangePushA("batched-SpMM");
   // Execute batched-SpMM per each CPU thread
   for (std::size_t batch = 0; batch < batch_size; ++batch) {
@@ -121,7 +122,8 @@ float spmm(ell_t<type_t, memory_space_t::device>* As,
   cusparseDestroyDnMat(desc_B);
   util::destroy_launch_configs(configs);
 
-  return thrust::reduce(timers.begin(), timers.end(), (float)0.0f);
+  // Outputs average time for now.
+  return thrust::reduce(timers.begin(), timers.end(), (float)0.0f) / batch_size;
 }  // namespace sparsifyme
 }  // namespace batched
 }  // namespace sparsifyme
