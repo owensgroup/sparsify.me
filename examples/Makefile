@@ -28,11 +28,15 @@ CXXOPT      = -O3
 NVCCDEBUG   = -O0 --debug --device-debug
 CXXDEBUG    = -O0 -g
 
+CUSPARSELT_DIR=../libs/libcusparse_lt
 ## Includes & Sources
-CUDA	= "$(shell dirname $(NVCC))/../include"
+CUDA	= "$(shell dirname $(NVCC))/../include" -I"$(CUSPARSELT_DIR)/include"
 CUBLAS = -lcublas
 CUSPARSE = -lcusparse
-INC 	= -I./../include -I$(CUDA) $(CUBLAS) $(CUSPARSE)
+NVRTC = "$(shell dirname $(NVCC))/../targets/x86_64-linux/lib/libnvrtc.so"
+LDIR = "$(CUSPARSELT_DIR)/lib64" $(NVRTC)
+CUSPARSELT = -lcusparseLt -ldl
+INC 	= -I./../include -I$(CUDA) -L$(LDIR) $(CUBLAS) $(CUSPARSE) $(CUSPARSELT)
 
 SOURCES = $(shell find . -name "*.cu")
 EXE   	= $(patsubst %.cu,%,$(SOURCES))
