@@ -9,37 +9,39 @@
  * 
  */
 #pragma once
-#include <sparsify.me/libs/cusparseLt.h>
+#include <cusparseLt.h>
 #include <sparsify.me/util/util.hxx>
 #include <vector>
 #pragma once
 namespace sparsifyme {
+namespace ampere {
 /**
  * @brief Ampere prune and SpMM functions
  */
 template <typename type_t>
-float ampere_spmm(type_t** dA,
-                  type_t** dB,
-                  type_t** dC,
-                  std::size_t m,
-                  std::size_t n,
-                  std::size_t k,
-                  cusparseOperation_t opA = CUSPARSE_OPERATION_NON_TRANSPOSE,
-                  cusparseOperation_t opB = CUSPARSE_OPERATION_NON_TRANSPOSE,
-                  type_t alpha = (type_t)1.0f,
-                  type_t beta = (type_t)0.f);
+std::vector<float> spmma(type_t** dA,
+                        type_t** dB,
+                        type_t** dC,
+                        std::size_t m,
+                        std::size_t n,
+                        std::size_t k,
+                        cusparseOperation_t opA = CUSPARSE_OPERATION_NON_TRANSPOSE,
+                        cusparseOperation_t opB = CUSPARSE_OPERATION_NON_TRANSPOSE,
+                        type_t alpha = (type_t)1.0f,
+                        type_t beta = (type_t)0.f);
 
 template <>
-std::vector<float> ampere_spmm(__half** dA,
-                  __half** dB,
-                  __half** dC,
-                  std::size_t m,
-                  std::size_t n,
-                  std::size_t k,
-                  cusparseOperation_t opA = CUSPARSE_OPERATION_NON_TRANSPOSE,
-                  cusparseOperation_t opB = CUSPARSE_OPERATION_NON_TRANSPOSE,
-                  __half alpha = (type_t)1.0f,
-                  __half beta = (type_t)0.f) {
+std::vector<float> spmma(__half** dA,
+                        __half** dB,
+                        __half** dC,
+                        std::size_t m,
+                        std::size_t n,
+                        std::size_t k,
+                        cusparseOperation_t opA,
+                        cusparseOperation_t opB,
+                        __half alpha,
+                        __half beta)
+  {
   cusparseLtHandle_t handle;
   cusparseLtMatDescriptor_t matA, matB, matC;
   cusparseLtMatmulDescriptor_t matmul;
@@ -51,7 +53,7 @@ std::vector<float> ampere_spmm(__half** dA,
     throw "Invalid matrix sizes for data type __half. Rows and columns must be divisible by 8.\n";
   }
   cusparseLtInit(&handle);
-  __half *dD;
+  __half **dD;
   dD = dC;
   util::timer_t timer;
   // Initialize cuSparse Matrix Descriptors
@@ -141,16 +143,16 @@ std::vector<float> ampere_spmm(__half** dA,
 }
 
 template <>
-std::vector<float> ampere_spmm(float** dA,
+std::vector<float> spmma(float** dA,
                   float** dB,
                   float** dC,
                   std::size_t m,
                   std::size_t n,
                   std::size_t k,
-                  cusparseOperation_t opA = CUSPARSE_OPERATION_NON_TRANSPOSE,
-                  cusparseOperation_t opB = CUSPARSE_OPERATION_NON_TRANSPOSE,
-                  float alpha = (type_t)1.0f,
-                  float beta = (type_t)0.f) {
+                  cusparseOperation_t opA,
+                  cusparseOperation_t opB,
+                  float alpha,
+                  float beta) {
   cusparseLtHandle_t handle;
   cusparseLtMatDescriptor_t matA, matB, matC;
   cusparseLtMatmulDescriptor_t matmul;
@@ -251,5 +253,8 @@ std::vector<float> ampere_spmm(float** dA,
   return {prune_time, compress_time, mul_time};
 }
 
+namespace batched {
 
+}//namespace batched
+}//namespace ampere
 }//namespace sparsifyme
