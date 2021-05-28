@@ -23,13 +23,13 @@
 
 int main(int argc, char** argv) {
   using namespace sparsifyme;
-  using type_t = __half;
+  using type_t = float;
 
-  if(argc != 5) {
+  if (argc != 5) {
     std::cout << "Invalid # of arguments. Usage: ./spmm m n k b" << std::endl;
     return EXIT_FAILURE;
   }
-  
+
   // Sizes (m, n, k) and batches
   std::size_t m = std::stoi(argv[1]);
   std::size_t n = std::stoi(argv[2]);

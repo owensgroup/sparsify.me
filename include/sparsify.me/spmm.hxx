@@ -41,7 +41,7 @@ float spmm(ell_t<type_t, memory_space_t::device>* As,
            float alpha = 1.0f,
            float beta = 0.0f) {
   thrust::host_vector<float> timers(batch_size);
-  thrust::host_vector<util::launch_t> configs(batch_size);
+  std::vector<util::launch_t> configs(batch_size);
   util::create_launch_configs(configs);
 
   thrust::host_vector<cusparseSpMatDescr_t> desc_As(batch_size);
@@ -98,7 +98,7 @@ float spmm(ell_t<type_t, memory_space_t::device>* As,
       auto& desc_C = desc_Cs[batch];
 
       void* buffer = configs[batch].buffer;
-      auto& timer = configs[batch].timer;
+      util::timer_t timer;
       timer.begin(stream);
       // Execute SpMM
       cusparseSpMM(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
