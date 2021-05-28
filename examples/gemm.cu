@@ -20,12 +20,16 @@
 
 int main(int argc, char** argv) {
   using type_t = float;
+  if(argc != 5) {
+    std::cout << "Invalid # of input args. Usage: ./gemm m n k b" << std::endl;
+    return EXIT_FAILURE;
+  }
 
   // Sizes (m, n, k) and batches
-  std::size_t m = 4;
-  std::size_t n = 4;
-  std::size_t k = 2;
-  std::size_t batch_size = 4;
+  std::size_t m = std::stoi(argv[1]);
+  std::size_t n = std::stoi(argv[2]);
+  std::size_t k = std::stoi(argv[3]);
+  std::size_t batch_size = std::stoi(argv[4]);
 
   /// Matrix A (pointers to data)
   thrust::host_vector<type_t*> h_A_pointers(batch_size);
@@ -89,30 +93,31 @@ int main(int argc, char** argv) {
   float elapsed = sparsifyme::batched::gemm(
       d_A_pointers.data().get(), d_B_pointers.data().get(),
       d_C_pointers.data().get(), m, n, k, batch_size);
+  
+  std::cout << elapsed << std::endl;
+  // // Log and output.
+  // std::cout << "Matrix Sizes (m, n, k, batch) = (" << m << ", " << n << ", "
+  //           << k << ", " << batch_size << ")" << std::endl;
+  // std::cout << "Time elapsed (ms) = " << elapsed << std::endl;
 
-  // Log and output.
-  std::cout << "Matrix Sizes (m, n, k, batch) = (" << m << ", " << n << ", "
-            << k << ", " << batch_size << ")" << std::endl;
-  std::cout << "Time elapsed (ms) = " << elapsed << std::endl;
+  // std::cout << "A-Matrix = " << std::endl;
+  // for (std::size_t batch = 0; batch < batch_size; ++batch) {
+  //   thrust::copy(d_A_batches[batch].begin(), d_A_batches[batch].end(),
+  //                std::ostream_iterator<type_t>(std::cout, " "));
+  //   std::cout << std::endl;
+  // }
 
-  std::cout << "A-Matrix = " << std::endl;
-  for (std::size_t batch = 0; batch < batch_size; ++batch) {
-    thrust::copy(d_A_batches[batch].begin(), d_A_batches[batch].end(),
-                 std::ostream_iterator<type_t>(std::cout, " "));
-    std::cout << std::endl;
-  }
+  // std::cout << "B-Matrix = " << std::endl;
+  // for (std::size_t batch = 0; batch < batch_size; ++batch) {
+  //   thrust::copy(d_B_batches[0].begin(), d_B_batches[0].end(),
+  //                std::ostream_iterator<type_t>(std::cout, " "));
+  //   std::cout << std::endl;
+  // }
 
-  std::cout << "B-Matrix = " << std::endl;
-  for (std::size_t batch = 0; batch < batch_size; ++batch) {
-    thrust::copy(d_B_batches[0].begin(), d_B_batches[0].end(),
-                 std::ostream_iterator<type_t>(std::cout, " "));
-    std::cout << std::endl;
-  }
-
-  std::cout << "C-Matrix = " << std::endl;
-  for (std::size_t batch = 0; batch < batch_size; ++batch) {
-    thrust::copy(d_C_batches[batch].begin(), d_C_batches[batch].end(),
-                 std::ostream_iterator<type_t>(std::cout, " "));
-    std::cout << std::endl;
-  }
+  // std::cout << "C-Matrix = " << std::endl;
+  // for (std::size_t batch = 0; batch < batch_size; ++batch) {
+  //   thrust::copy(d_C_batches[batch].begin(), d_C_batches[batch].end(),
+  //                std::ostream_iterator<type_t>(std::cout, " "));
+  //   std::cout << std::endl;
+  // }
 }

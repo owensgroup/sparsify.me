@@ -25,11 +25,16 @@ int main(int argc, char** argv) {
   using namespace sparsifyme;
   using type_t = __half;
 
+  if(argc != 5) {
+    std::cout << "Invalid # of arguments. Usage: ./spmm m n k b" << std::endl;
+    return EXIT_FAILURE;
+  }
+  
   // Sizes (m, n, k) and batches
-  std::size_t m = 4;
-  std::size_t n = 3;
-  std::size_t k = 4;
-  std::size_t batch_size = 4;
+  std::size_t m = std::stoi(argv[1]);
+  std::size_t n = std::stoi(argv[2]);
+  std::size_t k = std::stoi(argv[3]);
+  std::size_t batch_size = std::stoi(argv[4]);
 
   /// Sparse Matrices A (batched)
   thrust::host_vector<ell_t<type_t, memory_space_t::host>> h_As(batch_size);
@@ -110,30 +115,31 @@ int main(int argc, char** argv) {
   float elapsed = batched::spmm(d_As.data(), d_B.data().get(), C_ptrs.data(), m,
                                 n, k, batch_size);
 
-  // Log and output.
-  std::cout << "Matrix Sizes (m, n, k, batch) = (" << m << ", " << n << ", "
-            << k << ", " << batch_size << ")" << std::endl;
-  std::cout << "Time elapsed (ms) = " << elapsed << std::endl;
+  std::cout << elapsed << std::endl;
+  // // Log and output.
+  // std::cout << "Matrix Sizes (m, n, k, batch) = (" << m << ", " << n << ", "
+  //           << k << ", " << batch_size << ")" << std::endl;
+  // std::cout << "Time elapsed (ms) = " << elapsed << std::endl;
 
-  for (std::size_t batch = 0; batch < batch_size; ++batch) {
-    h_As[batch].print();
-  }
+  // for (std::size_t batch = 0; batch < batch_size; ++batch) {
+  //   h_As[batch].print();
+  // }
 
-  std::cout << "B-Matrix" << std::endl;
-  for (std::size_t batch = 0; batch < batch_size; ++batch) {
-    std::cout << "\t";
-    for (auto& val : h_B)
-      std::cout << static_cast<float>(val) << " ";
-    std::cout << std::endl;
-  }
+  // std::cout << "B-Matrix" << std::endl;
+  // for (std::size_t batch = 0; batch < batch_size; ++batch) {
+  //   std::cout << "\t";
+  //   for (auto& val : h_B)
+  //     std::cout << static_cast<float>(val) << " ";
+  //   std::cout << std::endl;
+  // }
 
-  std::cout << "C-Matrix" << std::endl;
-  for (std::size_t batch = 0; batch < batch_size; ++batch) {
-    std::cout << "\t";
-    auto& d_C = d_C_batches[batch];
-    thrust::host_vector<type_t> h_C = d_C;
-    for (auto& val : h_C)
-      std::cout << static_cast<float>(val) << " ";
-    std::cout << std::endl;
-  }
+  // std::cout << "C-Matrix" << std::endl;
+  // for (std::size_t batch = 0; batch < batch_size; ++batch) {
+  //   std::cout << "\t";
+  //   auto& d_C = d_C_batches[batch];
+  //   thrust::host_vector<type_t> h_C = d_C;
+  //   for (auto& val : h_C)
+  //     std::cout << static_cast<float>(val) << " ";
+  //   std::cout << std::endl;
+  // }
 }
