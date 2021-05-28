@@ -14,8 +14,10 @@
 
 int main(int argc, char** argv) {
   using namespace sparsifyme;
+  using type_t = float;
+
   if(argc != 5) {
-    throw "Invalid # of args. Usage: ./spmm_timing float_precision m n k b";
+    throw "Invalid # of args. Usage: ./spmm_timing m n k b";
   }
 
   int major_cc, minor_cc;
@@ -29,26 +31,10 @@ int main(int argc, char** argv) {
   }
 
   cudaDataType valueType;
-  // cusparseLt has no support for doubles
-  switch(argv[1]) {
-    case "f":
-      using type_t = float;
 
-      break;
-    // case "d":
-    //   using type_t = double;
-    //   break;
-    case "h":
-      using type_t = __half;
-      break;
-    default:
-      using type_t = float;
-      break;
-  }
-
-  std::size_t m = stoi(argv[2]);
-  std::size_t n = stoi(argv[3]);
-  std::size_t k = stoi(argv[4]);
+  std::size_t m = std::stoi(argv[2]);
+  std::size_t n = std::stoi(argv[3]);
+  std::size_t k = std::stoi(argv[4]);
 
 
   // Initialize host pointers
@@ -76,7 +62,7 @@ int main(int argc, char** argv) {
 
   // Call Ampere Functions
   auto times = sparsifyme::ampere_spmm(&dA, &dB, &dC, m,n,k);
-  std::cout << "Matrix Sizes (m, n, k) = (" << m << ", " << n << ", " << k << ")" << std::endl;
-  std::cout << "Time Elapsed (Prune, Compress, MM) = (" << times[0] << ", " << times[1] << ", " << times[2] << ")" << std::endl;
+  // std::cout << "Matrix Sizes (m, n, k) = (" << m << ", " << n << ", " << k << ")" << std::endl;
+  std::cout << times[0] << ", " << times[1] << ", " << times[2] << std::endl;
 
 }

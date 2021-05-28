@@ -10,6 +10,9 @@
  */
 #pragma once
 #include <random>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 namespace sparsifyme {
 namespace util {

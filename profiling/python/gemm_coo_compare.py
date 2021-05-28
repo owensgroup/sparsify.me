@@ -3,7 +3,7 @@ import torch
 import pandas as pd
 
 
-shapes = pd.read_csv('../datasets/shapes.csv')
+shapes = pd.read_csv('../../datasets/shapes.csv')
 gamma = .1
 # %%
 def time_gemm(m, n, k, b):
@@ -59,4 +59,24 @@ for index, row in shapes.iterrows():
     info['SpMM Time'].append(spmm_rt)
     info['D2S Time'].append(fmt_rt)
 
+# %%
+import matplotlib.pyplot as plt
+import numpy as np
+total_spmm_time = [a + b  for a,b in zip(info['SpMM Time'], info['D2S Time'])]
+labels = ['Layer' + str(x) for x in range(len(total_spmm_time))]
+x = np.arange(len(labels))
+width = 0.35
+fig, ax = plt.subplots()
+rects1 = ax.bar(x - width/2, info['GEMM Time'][1:10], width, label='GEMM Runtime')
+rects2 = ax.bar(x + width/2, total_spmm_time[1:10], width, label='Total SpMM Runtime')
+
+ax.set_ylabel('GPU Time (ms)')
+ax.set_title('GEMM Runtime vs SpMM Runtime (90% Sparsity)')
+ax.set_xticks(x)
+ax.set_xticklabels(labels)
+ax.legend()
+
+ax.bar_label(rects1)
+ax.bar_label(rects2)
+plt.show()
 # %%
