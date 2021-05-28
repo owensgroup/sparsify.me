@@ -25,9 +25,8 @@ struct timer_t {
   float time;
 
   timer_t() {
-    cudaEventCreate(&start_);
-    cudaEventCreate(&stop_);
-    cudaEventRecord(start_);
+    cudaEventCreateWithFlags(&start_, cudaEventBlockingSync);
+    cudaEventCreateWithFlags(&stop_, cudaEventBlockingSync);
   }
 
   ~timer_t() {
@@ -36,11 +35,11 @@ struct timer_t {
   }
 
   // Alias of each other, start the timer.
-  void begin() { cudaEventRecord(start_); }
-  void start() { this->begin(); }
+  void begin(cudaStream_t stream = 0) { cudaEventRecord(start_, stream); }
+  void start(cudaStream_t stream = 0) { this->begin(stream); }
 
-  float end() {
-    cudaEventRecord(stop_);
+  float end(cudaStream_t stream = 0) {
+    cudaEventRecord(stop_, stream);
     cudaEventSynchronize(stop_);
     cudaEventElapsedTime(&time, start_, stop_);
 

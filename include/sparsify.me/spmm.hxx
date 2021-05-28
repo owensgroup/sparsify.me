@@ -99,7 +99,7 @@ float spmm(ell_t<type_t, memory_space_t::device>* As,
 
       void* buffer = configs[batch].buffer;
       auto& timer = configs[batch].timer;
-      timer.start();
+      timer.begin(stream);
       // Execute SpMM
       cusparseSpMM(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
                    CUSPARSE_OPERATION_NON_TRANSPOSE, &alpha, desc_A, desc_B,
@@ -113,10 +113,12 @@ float spmm(ell_t<type_t, memory_space_t::device>* As,
       cusparseDestroyDnMat(desc_C);
     }));
   }
-  nvtxRangePop();
 
   for (auto& thread : threads)
     thread.join();
+
+  // End batched-SpMM range.
+  nvtxRangePop();
 
   // More clean-up.
   cusparseDestroyDnMat(desc_B);
