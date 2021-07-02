@@ -11,7 +11,6 @@
 #pragma once
 #include <math.h>
 #include <cstdio>
-#include <thread>
 
 #include <cusparse.h>
 #include <nvToolsExt.h>
@@ -83,49 +82,59 @@ float spmm(ell_t<type_t, memory_space_t::device>* As,
                             desc_B, &beta, desc_C, CUDA_R_32F,
                             CUSPARSE_SPMM_ALG_DEFAULT, &buffer_size);
     cudaMallocAsync(&buffer, buffer_size, stream);
-    cudaStreamSynchronize(stream);
   }
 
-  std::vector<std::thread> threads;
-  threads.reserve(batch_size);
+  // Lazy synchronization to simplify code.
+  cudaDeviceSynchronize();
+
+  util::timer_t t;
+  t.begin();
   nvtxRangePushA("batched-SpMM");
   // Execute batched-SpMM per each CPU thread
+  #pragma omp parallel for num_threads(batch_size)
   for (std::size_t batch = 0; batch < batch_size; ++batch) {
-    threads.push_back(std::thread([&, batch]() {
-      auto& handle = configs[batch].handle;
-      auto& stream = configs[batch].stream;
-      auto& desc_A = desc_As[batch];
-      auto& desc_C = desc_Cs[batch];
+    auto& handle = configs[batch].handle;
+    auto& stream = configs[batch].stream;
+    auto& desc_A = desc_As[batch];
+    auto& desc_C = desc_Cs[batch];
 
-      void* buffer = configs[batch].buffer;
-      util::timer_t timer;
-      timer.begin(stream);
-      // Execute SpMM
-      cusparseSpMM(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
-                   CUSPARSE_OPERATION_NON_TRANSPOSE, &alpha, desc_A, desc_B,
-                   &beta, desc_C, CUDA_R_32F, CUSPARSE_SPMM_ALG_DEFAULT,
-                   buffer);
-      cudaStreamSynchronize(stream);
-      timers[batch] = timer.end();
+    void* buffer = configs[batch].buffer;
+    // XXX: uncomment for average time.
+    // util::timer_t timer;
+    // timer.begin(stream);
 
-      // Clean-up
-      cusparseDestroySpMat(desc_A);
-      cusparseDestroyDnMat(desc_C);
-    }));
+    // Execute SpMM
+    cusparseSpMM(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
+                  CUSPARSE_OPERATION_NON_TRANSPOSE, &alpha, desc_A, desc_B,
+                  &beta, desc_C, CUDA_R_32F, CUSPARSE_SPMM_ALG_DEFAULT,
+                  buffer);
+    // cudaStreamSynchronize(stream);
+
+    // XXX: uncomment for average time.
+    // timers[batch] = timer.end(stream);    
   }
 
-  for (auto& thread : threads)
-    thread.join();
+  // Lazy synchronization to simplify code.
+  cudaDeviceSynchronize();
 
   // End batched-SpMM range.
   nvtxRangePop();
+  t.end();
 
-  // More clean-up.
+  // clean-up.
+  for (std::size_t batch = 0; batch < batch_size; ++batch) {
+    auto& desc_A = desc_As[batch];
+    auto& desc_C = desc_Cs[batch];
+    cusparseDestroySpMat(desc_A);
+    cusparseDestroyDnMat(desc_C);
+  }
   cusparseDestroyDnMat(desc_B);
   util::destroy_launch_configs(configs);
 
-  // Outputs average time for now.
-  return thrust::reduce(timers.begin(), timers.end(), (float)0.0f) / batch_size;
+  // XXX: uncomment for average time. 
+  // std::cout << "Average Elapsed Time per Batch (ms) = " << thrust::reduce(timers.begin(), timers.end(), (float)0.0f) << std::endl;
+
+  return t.milliseconds();
 }  // namespace sparsifyme
 }  // namespace batched
 }  // namespace sparsifyme

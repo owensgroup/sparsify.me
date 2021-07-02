@@ -15,6 +15,7 @@ SM_TARGETS 	= $(GEN_SM70)
 CXXFLAGS    += -std=c++14
 CXXFLAGS    += -Wall
 CXXFLAGS    += -Wno-unused-local-typedefs -Wno-strict-aliasing -Wno-unused-function -Wno-format-security
+CXXFLAGS	+= -fopenmp
 
 NVCCFLAGS   += -std=c++14
 NVCCFLAGS   += $(SM_TARGETS)
@@ -28,17 +29,18 @@ CXXOPT      = -O3
 NVCCDEBUG   = -O0 --debug --device-debug
 CXXDEBUG    = -O0 -g
 
-## Includes & Sources
-CUDA_PATH	= "$(shell dirname $(NVCC))/.."
-CUDA		= "$(CUDA_PATH)/include"
-CUSPARSELT_PATH = "./libcusparse_lt"
+## Paths, Includes, Libraries and Source Files
+CUDA_PATH	= $(shell dirname $(NVCC))/..
+CUSPARSELT_PATH = ./libcusparse_lt
 
+CUDA		= $(CUDA_PATH)/include
 CUBLAS		= -lcublas
-CUDART          = -L$(CUDA_PATH)/lib -lcudart
 CUSPARSE	= -lcusparse
-CUSPARSELT 	= -L$(CUSPARSELT_PATH)/lib64 -lcusparseLt
-NVRTC		= "$(CUDA_PATH)/targets/x86_64-linux/lib/libnvrtc.so" -ldl
-INC 		= -I./../include -I$(CUDA) -I$(CUSPARSELT_PATH)/include $(CUBLAS) $(CUDART) $(CUSPARSE) $(CUSPARSELT)
+NVRTC		= -lnvrtc
+CUSPARSELT 	= -lcusparseLt $(NVRTC)	# NVRTC required.
+
+LIBS		= $(CUBLAS) -L$(CUSPARSELT_PATH)/lib64 $(CUSPARSELT) $(CUSPARSE) -ldl
+INC 		= -I./../include -I$(CUDA) -I${CUSPARSELT_PATH}/include
 
 SOURCES 	= $(shell find . -name "*.cu")
 EXE 		= $(patsubst %.cu,%,$(SOURCES))
@@ -46,7 +48,7 @@ EXE 		= $(patsubst %.cu,%,$(SOURCES))
 all: $(EXE)
 % : %.cu
 	mkdir -p bin
-	$(NVCC) -ccbin=$(CXX) $(NVCCFLAGS) ${NVCCOPT} --compiler-options "${CXXFLAGS} ${CXXOPT}" -o bin/$@ $< $(INC)
+	$(NVCC) -ccbin=$(CXX) $(NVCCFLAGS) ${NVCCOPT} --compiler-options "${CXXFLAGS} ${CXXOPT}" -o bin/$@ $< $(LIBS) $(INC)
 
 clean:
 	rm -rf bin
