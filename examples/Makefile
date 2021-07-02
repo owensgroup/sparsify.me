@@ -31,11 +31,14 @@ CXXDEBUG    = -O0 -g
 ## Includes & Sources
 CUDA_PATH	= "$(shell dirname $(NVCC))/.."
 CUDA		= "$(CUDA_PATH)/include"
+CUSPARSELT_PATH = "./libcusparse_lt"
+
 CUBLAS		= -lcublas
+CUDART          = -L$(CUDA_PATH)/lib -lcudart
 CUSPARSE	= -lcusparse
-CUSPARSELT 	= -lcusparseLt
+CUSPARSELT 	= -L$(CUSPARSELT_PATH)/lib64 -lcusparseLt
 NVRTC		= "$(CUDA_PATH)/targets/x86_64-linux/lib/libnvrtc.so" -ldl
-INC 		= -I./../include -I$(CUDA) $(CUBLAS) $(CUSPARSE) $(CUSPARSELT)
+INC 		= -I./../include -I$(CUDA) -I$(CUSPARSELT_PATH)/include $(CUBLAS) $(CUDART) $(CUSPARSE) $(CUSPARSELT)
 
 SOURCES 	= $(shell find . -name "*.cu")
 EXE 		= $(patsubst %.cu,%,$(SOURCES))
