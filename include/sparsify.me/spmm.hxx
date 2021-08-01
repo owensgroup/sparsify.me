@@ -135,6 +135,61 @@ float spmm(ell_t<type_t, memory_space_t::device>* As,
   // std::cout << "Average Elapsed Time per Batch (ms) = " << thrust::reduce(timers.begin(), timers.end(), (float)0.0f) << std::endl;
 
   return t.milliseconds();
-}  // namespace sparsifyme
+}
+
+template <typename type_t>
+float strided_coo(std::size_t A_num_rows,
+                  std::size_t A_num_cols,
+                  std::size_t A_nnz,
+                  std::size_t B_num_rows,
+                  std::size_t B_num_cols,
+                  std::size_t num_batches,
+                  int* dA_rows,
+                  int* dA_cols,
+                  type_t* dA_values,
+                  type_t* dB,
+                  type_t** dC,
+                  type_t alpha = 1.0f,
+                  type_t beta = 0.0f) {
+  
+  util::timer_t t;
+  t.begin();
+  cusparseHandle_t handle = NULL;
+  cusparseSpMatDescr_t matA;
+  cusparseDnMatDescr_t matB, matC;
+  int ldb = B_num_rows;
+  int ldc = A_num_rows;
+  void* dBuffer = NULL;
+  size_t bufferSize = 0;
+  cusparseCreate(&handle);
+  cusparseCreateCoo(&matA, A_num_rows, A_num_cols, A_nnz,
+                    dA_rows, dA_cols, dA_values,
+                    CUSPARSE_INDEX_32I,
+                    CUSPARSE_INDEX_BASE_ZERO, CUDA_R_32F);
+  cusparseCooSetStridedBatch(matA, num_batches, 0);
+  cusparseCreateDnMat(&matB, B_num_rows, B_num_cols, ldb, dB,
+                                        CUDA_R_32F, CUSPARSE_ORDER_COL);
+  cusparseDnMatSetStridedBatch(matB, num_batches, B_size);
+  cusparseCreateDnMat(&matC, A_num_rows, B_num_cols, ldc, dC,
+                                        CUDA_R_32F, CUSPARSE_ORDER_COL);
+  cusparseDnMatSetStridedBatch(matC, num_batches, C_size);
+  cusparseSpMM_bufferSize(
+              handle,
+              CUSPARSE_OPERATION_NON_TRANSPOSE,
+              CUSPARSE_OPERATION_NON_TRANSPOSE,
+              &alpha, matA, matB, &beta, matC, CUDA_R_32F,
+              CUSPARSE_SPMM_COO_ALG4, &bufferSize);
+  cudaMalloc(&dBuffer, bufferSize);
+  cusparseSpMM(handle,
+               CUSPARSE_OPERATION_NON_TRANSPOSE,
+               CUSPARSE_OPERATION_NON_TRANSPOSE,
+               &alpha, matA, matB, &beta, matC, CUDA_R_32F,
+               CUSPARSE_SPMM_COO_ALG4, &bufferSize);
+  cusparseDestroySpMat(matA);
+  cusparseDestroyDnMat(matB);
+  cusparseDestroyDnMat(matC);
+  cusparseDestroy(handle);
+  return t.milliseconds();
+}
 }  // namespace batched
 }  // namespace sparsifyme
